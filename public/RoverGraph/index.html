@@ -1,0 +1,1107 @@
+<!DOCTYPE html>
+<html lang="es">
+	<head>
+		<title>IvanRodriguezProyectos</title>
+        <meta charset="utf-8">
+        <script src="js/three.js"></script>
+        <script src="js/VRMLLoader.js"></script>
+        <script src="js/stats.js"></script>
+		<script src="js/dat.gui.min.js"></script>
+		<script src="js/OrbitControls5.js"></script>
+		<script src="js/jquery.min.js"></script>
+		<script src="js/leaflet.js"></script>
+		<script src="/socket.io/socket.io.js"></script>
+		<script src="js/compatibility.js"></script>
+		<script src="js/smoother.js"></script>
+		<script src="js/objectdetect.js"></script>
+		<script src="js/objectdetect.handfist.js"></script>
+		<script src="js/Chart.min.js"></script>
+		<script src="js/bootstrap.min.js"></script>
+		<script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+		<link rel="stylesheet" href="css/bootstrap.min.css">
+		<link rel="stylesheet" href="css/w3-css.css">
+		<link rel="stylesheet" href="css/leaflet.css">
+		<link rel="stylesheet" href="css/slider.css">
+		<link rel="stylesheet" href="css/estilos.css">
+
+		<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+		<meta name="google" content="notranslate" />
+		<style>
+		
+
+		</style>
+		
+	</head>
+
+	<body class="cursorKamayuc" ondragstart="return false;" style="overflow:hidden !important; ">
+		<!-- <div class="dropdown elegirInterfaz">
+			<button class="btn btn-primary dropdown-toggle" type="button" data-toggle="dropdown"> Realidad Virtual
+			<span class="caret"></span></button>
+			<ul class="dropdown-menu">
+			  <li><a href="http://localhost:8000/RoverAR">Realidad Aumentada</a></li>
+			  <li><a href="http://localhost:8000/RoverRM">Realidad Mixta</a></li>
+			  <li><a href="http://localhost:8000/Brazo">Brazo Robótico</a></li>
+			</ul>
+		  </div> -->
+	    <div id="idRender" class="w3-center "  style="position: absolute;left: 0px;top:0px ;" ></div>
+		<div id="map" class="styleMap" style="display:block"> </div>
+		<p id="longlat" class="styleLongLati" style="display:block" ></p>
+		<p class="w3-center" style="position:absolute;left:100%;margin-left:-210px; background:#0A1515; z-index:93;width:210px;height: 100px;top:100%;margin-top: -250px;color:white">Tele Operación</p>
+		<p style="position:absolute;left:85%;background:#0A1515;z-index:93;width:200px;height: 170px;top:100%;margin-top: -170px"></p>
+		<p id="ti" class="styleMarco w3-center" > Joystick </p>
+		<img src="imgs/logo.png" class="styleKamayucLogo" value="" />
+		<img id="idPresion" src="imgs/presion.png" class="stylePresion" value="" />
+		<p id="idPresionDatos" class="stylePresionDatos" > 1.01325  bar </p>
+		<img id="idUV" src="imgs/uv.png" class="styleUV" value="" />
+		<p id="idUVTitulo" class="styleUVTitulo w3-center" > UV </p>
+		<p id="idUVMarcador" class="styleUVMarcador" ></p>
+		<p id="idUVDatos" class="styleUVDatos w3-center" ></p>
+
+		<div style="display:block"> 
+			<img id="btnJoystickBack" onmousedown="" onclick="" src="imgs/joystick_back.png" class="styleJoystickBack" value="" />
+			<img id="btnJoystickFront"  onmousemove="getPos(event)" onmousedown="actMov(event)" onclick="" src="imgs/joystick_front.png" class="styleJoystickFront" value="" />
+		</div>
+		
+		<canvas id='canvas' style="position: absolute; z-index: 98; top: 100%;margin-top:-500px; left: 0px; margin-left:0px; width:35%;height:300px;opacity: 1; display:block"></canvas>
+		<div id="containerVideo">
+			<video autoplay="true" id="videoElement"></video>
+		</div>
+		
+		<div class="energia w3-center">
+			<p>Batería</p>
+			<p id="idBateria" style="margin-top:-5px">80%</p>
+		</div>	
+		<div class="progress energia-barra" >
+			<div id="idBarraBateria" class="progress-bar progress-bar-striped active" role="progressbar" aria-valuenow="40" aria-valuemin="0" aria-valuemax="100" style="width:80%"></div>
+		</div>		
+		<label class="switch">
+			<input type="checkbox" onclick="activarTelecontrol()">
+			<span class="slider round"></span>
+		</label>
+		<div class="styleTemp" >
+			<canvas id="graficaTemp" ></canvas>
+		</div>
+		<div class="styleHumed">
+			<canvas id="graficaHumed" ></canvas>
+		</div>
+		<div class="styleHumedSuelo">
+			<canvas id="graficaHumedSuelo" ></canvas>
+		</div>
+		<div class="styleCE">
+			<canvas id="graficaCE" ></canvas>
+		</div>
+	
+	</body>
+
+		<script >
+
+		    var camera, scene, renderer, stats;
+			var cuerpo;
+			var llantaIzq;
+			var llantaDer;
+			var clock;
+
+			var rover;
+			var worldWidth = 128, worldDepth = 128;
+			var mesh, geometry, material;
+			var huellaGeo;
+			var huellaMat;
+			var huellaMesh;
+			var arrayHuella=[];
+			var controls;
+			var ava;			
+
+			var sentido=0;
+			var motor=0;
+			var ang=0;
+			
+			var cont=0;
+			var socket=io();
+
+			var rot=0;
+			var gir=0; 
+			var camX=-7;
+			var camZ=10;
+			var brazoInferior;
+			var brazoInfe;
+			var brazoCentro;
+			var brazoCent;
+			var brazoSuperior;
+			var brazoSup;
+			var brazoSuperior2;
+			var brazoSup2;
+			var contPasos=0;
+			var girX=0;
+			var girY=0;
+			var girZ=0;
+		    var brazoX=0;
+			var gripper=0;
+			var map = L.map('map').setView([38.36, -110.7],17);
+			L.tileLayer('http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {attribution: 'Map data &copy; <a href="http://openstreetmap.org">OpenStreetMap</a> contributors, <a href="http://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>, Imagery © <a href="http://cloudmade.com">CloudMade</a>',maxZoom: 18}).addTo(map);
+			var latlngs = [[38.36, -110.7]];
+			var polyline;
+			var SpeechRecognition=window.SpeechRecognition || window.webkitSpeechRecognition;
+            var recorder = new SpeechRecognition();
+            //recorder.continuous=true;
+            //recorder.interimResults = true;
+            recorder.onresult=(event)=>{
+                var current= event.resultIndex;
+                var transcript=event.results[current][0].transcript; // limpiar el caché cada cierto tiempo
+			
+				//Control por Reconocimiento de Voz
+				if(transcript.toString().indexOf("avanza")!=-1){
+					ava=1;
+				}else if(transcript.toString().indexOf("para")!=-1){
+					ava=0;
+				}
+				if(transcript.toString().indexOf("derecha")!=-1){
+					girY-=30*Math.PI/180;
+				}else if(transcript.toString().indexOf("izquierda")!=-1){
+					girY+=30*Math.PI/180;
+				}
+				socket.emit('recovoz:data',{
+						datoAva:ava,
+						datoGirY:girY
+				});
+				//Conversar con el Rover
+				// roverConversar(transcript);
+				// $('#idPresionDatos').html(transcript.toString());
+			};
+			
+			function roverConversar(msg){
+				var speech = new SpeechSynthesisUtterance();
+				speech.text="Respuesta";
+				if(msg.includes('Hola')){
+					speech.text="Hola mucho gusto, soy el Rover Pachacutec";
+				}
+				speech.volume=1;
+				speech.rate=1;
+				
+				speech.pitch=1;
+				window.speechSynthesis.speak(speech);
+
+			}
+
+            recorder.onspeechend = function() {
+                 recorder.stop();
+            }
+            recorder.start();
+            
+            recorder.addEventListener('end', recorder.start);
+
+			socket.on('recovoz:data',function(data){
+			//		console.log(data.datoGirY);
+					ava=data.datoAva;
+					girY=data.datoGirY;
+			});
+
+			socket.on('serial:data',function(data){
+				console.log(data);
+				let angulos=data.value.split(",");
+			
+				ava=1;
+				//girX=angulos[2];
+				//console.log(girX);
+				girY=angulos[0];
+				//=1;
+				//girZ=angulos[1];
+			
+				// $('#idPresionDatos').html(giroX);
+               
+
+			});
+
+			socket.on('jostick:data',function(data){			
+					console.log("fgh");
+					ava=data.datoAva;
+					girY=data.datoGirY;
+					activandoMov= data.datoActivandoMov;
+					sentido=data.datoSentido;
+					motor=data.datoMotor;
+			});
+			
+			function activarTelecontrol(){
+				//código para el switch de telecontrolado/autónomo
+			}
+
+			rover = new THREE.VRMLLoader();//roverPachaqutec
+			rover.load( 'vrml/rover.wrl', function ( object3 ) {
+				cuerpo=object3;
+				cuerpo.scale.set(4,4,4);
+				cuerpo.position.x=0;//rotation x :-Math.PI/2
+				cuerpo.position.y=0;//0.76
+				cuerpo.position.z=0;//0.02
+									
+				for(let i=0;i<=120;i++){
+					huellaGeo = new THREE.BoxGeometry( 1, 0.2, 1 );
+					huellaMat = new THREE.MeshBasicMaterial( {color: 0x0CB6B8} );
+					huellaMesh = new THREE.Mesh( huellaGeo, huellaMat );
+
+					huellaMesh.position.x=0;
+					huellaMesh.position.y=0;
+					huellaMesh.position.z=0;
+					arrayHuella[i]=huellaMesh;
+					scene.add(huellaMesh);
+				}
+
+				definirBrazoRobotico()	
+				// animate();
+
+			});
+
+			function definirBrazoRobotico(){
+				brazoInferior=new THREE.VRMLLoader();
+				brazoInferior.load('vrml/brazoinferior.wrl',function(object1){
+					brazoInfe=object1;
+					brazoInfe.scale.set(16,16,16);
+					brazoInfe.position.y=1.6;
+					
+					brazoCentro=new THREE.VRMLLoader();
+					brazoCentro.load('vrml/brazocentro.wrl',function(object2){
+						brazoCent=object2;
+						brazoCent.scale.set(16,16,16);
+						brazoCent.position.y=1.6;
+						
+						brazoSuperior=new THREE.VRMLLoader();
+						brazoSuperior.load('vrml/brazosuperior.wrl',function(object3){
+							brazoSup=object3;
+							brazoSup.scale.set(16,16,16);
+							brazoSup.position.y=1.6;
+							
+							brazoSuperior2=new THREE.VRMLLoader();	
+							brazoSuperior2.load('vrml/brazosuperior2.wrl',function(object4){
+								brazoSup2=object4;
+								brazoSup2.scale.set(16,16,16);
+								brazoSup2.position.y=1.6;
+								animate();
+							});
+
+						});
+					
+					});
+					
+
+				});
+			}
+
+			var countBat=80;
+			var countUV=325;//2
+			setInterval(function(){
+				countBat-=0.1*Math.random();
+				countBat-=0.1*Math.random();
+				let cBat=Math.round(countBat*10)/10;
+				if(countBat>=0){
+					$('#idBateria').html(cBat.toString()+'%');
+					$('#idBarraBateria').css('width',cBat.toString()+'%');
+				}
+				$('#idUVDatos').html('2');
+				$('#idUVMarcador').css('top', +countUV.toString()+'px');				
+
+			},2000);
+
+			init();
+			//animate();	
+
+			function init() {
+
+				ava=0;
+				//Iniciar reconocimiento de Voz
+				//cont=0;
+				camera = new THREE.PerspectiveCamera( 60, window.innerWidth / window.innerHeight, 1, 20000 );
+				
+				camera.position.x = -4;
+				camera.position.y = 4;
+				camera.position.z = 8;
+
+				clock = new THREE.Clock();
+
+				scene = new THREE.Scene();
+				scene.add( camera );
+				scene.background = new THREE.Color( 0xaaccff );
+				scene.fog = new THREE.FogExp2( 0xaaccff, 0.021 );
+			
+				geometry = new THREE.PlaneBufferGeometry( 20000, 20000,1,1 );
+				geometry.rotateX( - Math.PI / 2 );
+				var position = geometry.attributes.position;
+				position.usage = THREE.DynamicDrawUsage;
+				for ( var i = 0; i < position.count; i ++ ) {
+					var y = 0.1 * Math.sin( i );
+					position.setY( i, 0 );
+				}
+				var texture = new THREE.TextureLoader().load( 'imgs/terrain2.jpg' );
+				texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
+				texture.repeat.set( 353, 353);
+						
+				material = new THREE.MeshBasicMaterial( { color: 0xcf882c, map: texture } );				
+				mesh = new THREE.Mesh( geometry, material );
+				scene.add( mesh );
+
+				// light
+
+				var dirLight = new THREE.DirectionalLight( 0xeeeeee );
+				dirLight.position.set( 200, 200, 1000 ).normalize();
+
+				camera.add( dirLight );
+				camera.add( dirLight.target );
+			
+				renderer = new THREE.WebGLRenderer({antialias:true});
+				renderer.setPixelRatio( window.devicePixelRatio );
+				
+				renderer.setSize( window.innerWidth, window.innerHeight );
+				//renderer.setClearColor( 0xe4f9ee, 1);
+				document.getElementById('idRender').appendChild(renderer.domElement);
+
+				//controls 
+				
+				controls = new THREE.OrbitControls(camera, renderer.domElement );
+				controls.maxPolarAngle = Math.PI * 0.45;//0.495
+				//controls.target.set( 0, 10, 0 );
+				controls.minDistance =3;
+				controls.maxDistance = 15;
+				//controls.update();
+
+				controls.target.x = 0;
+				controls.target.y = 0;
+				controls.target.z = 0;
+
+				window.addEventListener( 'resize', onWindowResize, false );
+				$("#longlat").text(" Longitud "+" - "+"Latitud ");
+	
+			}
+
+			function onWindowResize() {
+
+				camera.aspect = window.innerWidth / window.innerHeight;
+				camera.updateProjectionMatrix();
+
+				renderer.setSize( window.innerWidth, window.innerHeight );
+
+			}
+					
+			
+			function animate() {
+				//$('#idPresionDatos').html(brazoX); 
+
+				cuerpo.rotation.x=0;
+				cuerpo.rotation.y=0;
+				cuerpo.rotation.z=0;
+
+				// brazoInfe.rotation.x=0;
+				// brazoInfe.rotation.y=0;
+				// brazoInfe.rotation.z=0;
+
+				// brazoCent.rotation.x=0;
+				// brazoCent.rotation.y=0;
+				// brazoCent.rotation.z=0;
+
+				// brazoSup.rotation.x=0;
+				// brazoSup.rotation.y=0;
+				// brazoSup.rotation.z=0;
+
+				// brazoSup2.rotation.x=0;
+				// brazoSup2.rotation.y=0;
+				// brazoSup2.rotation.z=0;
+
+				ejeX = new THREE.Vector3(1,0,0);
+				ejeY = new THREE.Vector3(0,1,0);
+				ejeZ = new THREE.Vector3(0,0,1);
+				
+				cuerpo.rotateOnAxis(ejeX, girX);
+				cuerpo.rotateOnAxis(ejeY, girY);
+				cuerpo.rotateOnAxis(ejeZ, girZ);
+
+				// brazoCent.rotateOnAxis(ejeY, girY)
+				// brazoSup.rotateOnAxis(ejeY, girY);
+				// brazoSup.rotateOnAxis(ejeZ, girZ);
+				// brazoSup2.rotateOnAxis(ejeY, girY);
+				// brazoSup2.rotateOnAxis(ejeZ, girZ);
+				if(ava==1){
+					if(ang==0){
+						eje = new THREE.Vector3(0,1,0);
+						arrayHuella[contPasos].rotation.x=0;
+						arrayHuella[contPasos].rotation.y=0;
+						arrayHuella[contPasos].rotation.z=0;
+						arrayHuella[contPasos].rotateOnAxis(eje,girY);
+						ang=1;
+					
+					}else if(ang==1){
+
+						eje = new THREE.Vector3(1,0,0);	            
+						rot+=2*Math.PI/180;			
+						cont+=1;		
+                        paso=0.07;
+						giroDirec=girY;
+						cuerpo.position.z-=Math.cos(giroDirec)*paso;
+						cuerpo.position.x-=Math.sin(giroDirec)*paso;	
+					
+						cateZ=Math.cos(giroDirec)*paso;
+						cateX=Math.sin(giroDirec)*paso;
+						
+						camera.position.z-=cateZ;
+						camera.position.x-=cateX;
+
+						controls.target.x -=cateX;
+						controls.target.z -=cateZ;
+						controls.update();	
+					
+						if (cont==22){
+							ang=0;
+							cont=0;
+							arrayHuella[contPasos].position.x=cuerpo.position.x;
+							arrayHuella[contPasos].position.z=cuerpo.position.z;
+										
+							rutX+=Math.sin(giroDirec)*0.00001;
+							rutY+=Math.cos(giroDirec)*0.00001;
+							
+							$("#longlat").text(" Long="+rutX.toString()+"° \n Lat="+rutY.toString()+"°");
+							latlngs.push([rutX,rutY]);
+							polyline= L.polyline(latlngs, {color: '#0CB6B8'}).addTo(map);
+							map.fitBounds(polyline.getBounds());
+
+							if(contPasos<120){
+								contPasos+=1;
+							}else{
+								contPasos=0;
+							}				 		
+						}
+					}	
+					
+				}
+
+				scene.add(cuerpo);
+
+				// agregarBrazoAEscena();
+				 
+				requestAnimationFrame( animate );
+
+				renderer.render( scene, camera );
+
+				render();
+			}
+
+			function render() {
+				var delta = clock.getDelta();
+				var time = clock.getElapsedTime() * 20;
+				// var position = geometry.attributes.position;
+				// for ( var i = 0; i < position.count; i ++ ) {
+				// 	//var y = 50 * Math.sin( i / 5 + ( time + i ) / 7 );
+				// 	var y = 0.05 * Math.sin( 2*i / 5 + ( time + 2*i ) / 7 );
+				// 	position.setY( i, y );
+				// }
+				//position.needsUpdate = true;
+				//controls.update( delta );
+				renderer.render( scene, camera );
+			}
+
+			function agregarBrazoAEscena(){
+				 scene.add(brazoInfe);
+				 scene.add(brazoCent);
+				 if(gripper==0){
+					scene.remove(brazoSup2);
+					scene.add(brazoSup);
+				 }else if(gripper==1){
+					scene.remove(brazoSup);
+					scene.add(brazoSup2);
+				 }
+			}
+
+			document.addEventListener('contextmenu', event => event.preventDefault());
+
+			var btnClickBack = document.getElementById('btnJoystickBack');
+			var btnClickFront = document.getElementById('btnJoystickFront');
+			var activandoMov=0;
+
+			// $( "#btnAvanzar" ).mousedown(function() {
+			// 	ava=1;	
+			// });
+
+			// $( "#btnAvanzar" ).mouseup(function() {
+			// 	ava=0;
+			// 	alert('hola q tal');
+			// });
+
+			// $('#btnAvanzar').on('mousedown', function() { 
+    		// 	ava=1; 
+			// 	}).on('mouseup mouseleave', function() { 
+			// 	ava=0; 
+			// }); 
+
+			// $("#btnJoystickFront").on(function(e) {
+			// 	var offset = $(this).offset(); //alert(e.clientX - offset.left); alert(e.clientY - offset.top); 
+			// 	posClickX=e.clientX - offset.left +100;
+
+			// });
+			var posClickX=btnClickBack.offsetLeft+btnClickBack.offsetWidth/2;
+			var posClickY=btnClickBack.offsetTop+btnClickBack.offsetHeight/2;
+		    var posLeft=-100;
+			var posTop=-102;
+			
+
+			/*Cuando se haga clic*/
+			// btnClickBack.onmousedown = function() {
+			// 	ava=1;
+			// 	// $("#btnJoystickFront").css("margin-left", "-50px");
+			// 	// alert(posClickX);
+			// 	//alert('hola q tal');
+				
+			// };
+
+			/*Cuando se deje de hacer clic*/
+			// btnClickBack.onmouseup = function() { 
+			// 	ava=0;
+			// };
+			// btnClickBack.onmouseleave = function() { 
+			// 	ava=0;
+			// };
+			
+			/*Cuando se haga clic*/
+			// btnClickBack.ontouchstart = function() {
+			// 	ava=1;
+			// 	//alert('hola q tal');
+			// };
+
+			// /*Cuando se deje de hacer clic*/
+			// btnClickBack.ontouchend = function() { 
+			// 	ava=0;
+			// };
+			btnClickBack.ondragstart = function() { return false; };
+			
+			btnClickBack.ontouchmove = function() { 
+
+
+				return false;
+			};
+			btnClickFront.ontouchmove = function() { 
+				ava=1;
+
+				sincroJostick()
+				return false;
+			};
+
+			/*Cuando se haga clic*/
+			// btnClickFront.onmousedown = function() {
+			// 	ava=1;
+
+			// 	//alert('hola q tal');
+			// };
+
+			/*Cuando se deje de hacer clic*/
+			btnClickFront.onmouseup = function() { 
+				ava=0;
+				activandoMov=0;
+				sentido=0;
+				motor=0;
+				sincroJostick()
+			};
+			btnClickFront.ontouchend = function() { 
+				ava=0;
+				activandoMov=0;
+				sentido=0;
+				motor=0;
+				sincroJostick()
+			};
+
+			btnClickFront.ontouchcancel = function() { 
+				ava=0;
+				sentido=0;
+				motor=0;
+				sincroJostick()
+			};
+
+			btnClickFront.onmouseleave = function() { 
+				ava=0;
+				sentido=0;
+				motor=0;
+				sincroJostick()
+				// activandoMov=0;
+				// posLeft+=x-posClickX;
+				// posTop+=y-posClickY;
+			};
+			
+			/*Cuando se haga clic*/
+			// btnClickFront.ontouchstart = function() {
+				
+			// 	//alert('hola q tal');
+			// };
+
+            btnClickFront.addEventListener('touchmove', function(e){
+				x=e.touches[0].clientX;
+				y=e.touches[0].clientY;
+				desp(x,y);
+
+			});
+
+			btnClickFront.addEventListener('touchstart', function(e){
+				x=e.touches[0].clientX;
+				y=e.touches[0].clientY;
+				movimiento(x,y);
+
+			});
+
+			/*Cuando se deje de hacer clic*/
+			// btnClickFront.ontouchend = function() { 
+			// 	ava=0;
+			// };
+
+			btnClickFront.ondragstart = function() { return false; };
+			
+			
+
+			function getPos(e){
+
+				x=e.clientX;
+				y=e.clientY;
+				 desp(x,y);
+				
+				
+				//alert(btnClickBack.offsetLeft);
+				//alert(ava);
+				//alert(x);
+			}
+			
+    	    // function stopTracking(){
+    		// 	activandoMov=0;
+    		// }
+
+			function actMov(e){
+				
+				posClickX=e.clientX;
+				posClickY=e.clientY;
+				x=e.clientX;
+    			y=e.clientY;
+				movimiento(x,y);
+				
+			}
+
+			var cordJostCentroX=btnClickBack.offsetLeft+btnClickBack.offsetWidth/2;
+			var cordJostCentroY=btnClickBack.offsetTop+btnClickBack.offsetHeight/2;
+			var giroDirec=0;
+			var rutX=38.36;
+			var rutY=-110.7;
+		//	var giroRut=0;[38.36, -110.7
+			function movimiento(x,y){
+
+				 cordJostCentroX=btnClickBack.offsetLeft+btnClickBack.offsetWidth/2;
+			     cordJostCentroY=btnClickBack.offsetTop+btnClickBack.offsetHeight/2;
+
+				 activandoMov=1;
+				 anchoB=btnClickBack.offsetWidth;
+				 anchoF=btnClickFront.offsetWidth;
+				 xB=btnClickBack.offsetLeft;
+				 xF=btnClickFront.offsetLeft;
+				 alturaB=btnClickBack.offsetHeight;
+				 alturaF=btnClickFront.offsetHeight;
+				 yB=btnClickBack.offsetTop;
+				 yF=btnClickFront.offsetTop;
+				
+				 if((x>=xB+anchoB/2-0.8*anchoF) && (x<=xB+anchoB/2+0.7*anchoF)){
+					if((y>=yB+alturaB/2-0.8*alturaF) && (y<=yB+alturaB/2+0.7*alturaF)){
+						
+						$("#btnJoystickFront").css("margin-left",-(xB+anchoB-x+anchoF/2) +"px");
+						$("#btnJoystickFront").css("margin-top",-(yB+alturaB-y+alturaF/2) +"px");
+
+						cordJostX=btnClickFront.offsetLeft+btnClickFront.offsetWidth/2;
+						cordJostY=btnClickFront.offsetTop+btnClickFront.offsetHeight/2;
+
+						giroo= Math.atan((cordJostCentroY-cordJostY)/(cordJostX-cordJostCentroX));
+						difeY=cordJostCentroY-cordJostY;
+						
+						//$("#ti").text(giroo);
+						if (giroo>=0 && giroo<=Math.PI/2 && difeY>=0 ){
+							//alert(gir);
+							gir= -Math.atan((cordJostY-cordJostCentroY)/(cordJostX-cordJostCentroX));	
+							giroDirec=gir;
+							
+						 }else if(giroo<=0 && giroo>=-Math.PI/2 && difeY>=0 ){
+				 			gir= Math.PI-Math.atan((cordJostY-cordJostCentroY)/(cordJostX-cordJostCentroX));
+							giroDirec=gir;
+
+						 }else if(giroo>=0 && giroo<=Math.PI/2 && difeY<=0 ){
+				 			gir= Math.PI-Math.atan((cordJostY-cordJostCentroY)/(cordJostX-cordJostCentroX));
+							 giroDirec=gir;
+
+						 }else if(giroo<=0 && giroo>=-Math.PI/2 && difeY<=0 ){
+				 			gir= -Math.atan((cordJostY-cordJostCentroY)/(cordJostX-cordJostCentroX));
+							giroDirec=gir;
+
+						 }	
+                        
+						//alert(gir);
+						girY=giroDirec;
+						sincroJostick()
+
+					}
+				}
+
+			}
+
+          function desp(x,y){
+			if(activandoMov==1){
+    			
+				ava=1;
+				
+				cordJostCentroX=btnClickBack.offsetLeft+btnClickBack.offsetWidth/2;
+			    cordJostCentroY=btnClickBack.offsetTop+btnClickBack.offsetHeight/2;
+
+
+			 // x-=25;
+			 // y-=25;
+			  anchoB=btnClickBack.offsetWidth;
+			  anchoF=btnClickFront.offsetWidth;
+			  xB=btnClickBack.offsetLeft;
+			  xF=btnClickFront.offsetLeft;
+			  alturaB=btnClickBack.offsetHeight;
+			  alturaF=btnClickFront.offsetHeight;
+			  yB=btnClickBack.offsetTop;
+			  yF=btnClickFront.offsetTop;
+			 // alert(x);
+			 // alert(xB);				
+			 // alert(xB+(anchoB/2)-anchoF);
+			 // alert(xB+(anchoB/2)+anchoF);
+
+			 // if((x>=xB+(anchoB-anchoF)/2-anchoF/4) && (x<=xB+(anchoB+anchoF)/2+anchoF/4)){
+			 // 	// alert(y);
+			 //     // alert(yB);				
+			 //     // alert(yB+(alturaB-alturaF)/2-alturaF/4);
+			 //     // alert(yB+(alturaB+alturaF)/2+alturaF/4);
+			 // 	if((y>=yB+(alturaB-alturaF)/2-alturaF/4) && (y<=yB+(alturaB+alturaF)/2+alturaF/4) ){
+			 // 		//x-=25;
+			 //         // if(x<=xB+anchoB/2){
+			 //         // 	margenLeft=-(xB+anchoB-x+anchoF/2);
+			 // 		// }else{
+			 // 		// 	margenLeft=-(xB+anchoB-x+anchoF/2);
+			 // 		// }
+
+			 // 		$("#btnJoystickFront").css("margin-left", -(xB+anchoB-x+anchoF/2)+"px");
+			 // 		$("#btnJoystickFront").css("margin-top", -(yB+alturaB-y+alturaF/2)+"px");
+			 // 	// 	$("#btnJoystickFront").css("margin-top", "0px");
+			 // 	}
+			 // }
+			 if(Math.pow(x-(xB+anchoB/2),2)+Math.pow(y-(yB+alturaB/2),2)<=Math.pow(0.9*anchoF,2)){
+				 // alert(x);
+				 // alert(posClickX);
+				 // alert(-100+x-posClickX);
+				 
+				 $("#btnJoystickFront").css("margin-left", -(xB+anchoB-x+anchoF/2)+"px");
+				 $("#btnJoystickFront").css("margin-top", -(yB+alturaB-y+alturaF/2)+"px");
+				 
+				 cordJostX=btnClickFront.offsetLeft+btnClickFront.offsetWidth/2;
+				 cordJostY=btnClickFront.offsetTop+btnClickFront.offsetHeight/2;
+				 
+				 giroo= Math.atan((cordJostCentroY-cordJostY)/(cordJostX-cordJostCentroX));
+						difeY=cordJostCentroY-cordJostY;
+						
+						// $("#ti").text(giroo);
+						if (giroo>=0 && giroo<=Math.PI/2 && difeY>=0 ){
+							//alert(gir);
+							gir= -Math.atan((cordJostY-cordJostCentroY)/(cordJostX-cordJostCentroX));	
+							giroDirec=gir;			 	
+						 }else if(giroo<=0 && giroo>=-Math.PI/2 && difeY>=0 ){
+				 			gir= Math.PI-Math.atan((cordJostY-cordJostCentroY)/(cordJostX-cordJostCentroX));
+							giroDirec=gir;
+						 }else if(giroo>=0 && giroo<=Math.PI/2 && difeY<=0 ){
+				 			gir= Math.PI-Math.atan((cordJostY-cordJostCentroY)/(cordJostX-cordJostCentroX));
+							 giroDirec=gir;
+						 }else if(giroo<=0 && giroo>=-Math.PI/2 && difeY<=0 ){
+				 			gir= -Math.atan((cordJostY-cordJostCentroY)/(cordJostX-cordJostCentroX));
+							giroDirec=gir;
+						 }				 
+				
+					
+				 if(x>=xB+anchoB/2){
+					sentido=1;
+				}else{
+					sentido=-1;
+				}
+
+				if(y>=yB+alturaB/2){
+					motor=1;
+				}else{
+					motor=-1;
+				}
+				
+				girY=giroDirec;
+				sincroJostick()
+				 // $("#btnJoystickFront").css("margin-left",posLeft+x-posClickX +"px");
+				 // $("#btnJoystickFront").css("margin-top",posTop +y-posClickY+"px");
+			 }
+
+		  }
+
+		  }
+
+		  function sincroJostick(){
+			console.log("asd");
+			socket.emit('jostick:data',{
+						datoAva:ava,
+						datoGirY:girY,
+						datoActivandoMov:activandoMov,
+						datoSentido:sentido,
+						datoMotor:motor
+				});
+		  }
+
+		  window.addEventListener("keydown", function (event) {
+		  	//console.log(event.key);
+		
+				if(event.key.toString()=='h'){
+					if(girY>0){
+						girY-=3*Math.PI/180;
+					}
+				}else if(event.key.toString()=='k'){
+					if(girY<22*Math.PI/180){
+						girY+=3*Math.PI/180;
+					}
+				}else if(event.key.toString()=='j'){
+					if(girZ<60*Math.PI/180){
+						girZ+=3*Math.PI/180;
+					}
+				}else if(event.key.toString()=='u'){
+					if(girZ>0){
+						girZ-=3*Math.PI/180;
+					}
+				}else if(event.key.toString()=='o'){
+					gripper=0;
+				}else if(event.key.toString()=='l'){
+					gripper=1;
+				}
+		
+				socket.emit('teclado:data',{
+						value:event.key.toString()
+
+				});
+
+
+		  },true);
+
+		
+		// function gamePad(){
+		// 	var gamepads = navigator.getGamepads ? navigator.getGamepads() : (navigator.webkitGetGamepads ? navigator.webkitGetGamepads : []);
+		//     var gp=gamepads[0];
+		//   	var btn=gp.buttons;
+			
+		// 		if(btn[3].pressed){
+		// 			if(girY>0){
+		// 				girY-=3*Math.PI/180;
+		// 			}
+		// 			socket.emit('serial:data',{
+		// 				value:'h'
+
+		// 			});
+		// 		}
+
+		// 		if(btn[1].pressed){
+		// 			if(girY<18*Math.PI/180){
+		// 				girY+=3*Math.PI/180;
+		// 			}
+		// 			socket.emit('serial:data',{
+		// 				value:'k'
+
+		// 			});
+		// 		}
+
+		// 		if(btn[2].pressed){
+		// 			if(girZ<60*Math.PI/180){
+		// 				girZ+=3*Math.PI/180;
+		// 			}
+		// 			socket.emit('serial:data',{
+		// 				value:'j'
+
+		// 			});
+		// 		}
+
+		// 		if(btn[0].pressed){
+		// 			if(girZ>0){
+		// 				girZ-=3*Math.PI/180;
+		// 			}
+		// 			socket.emit('serial:data',{
+		// 				value:'u'
+
+		// 			});
+		// 		}
+
+		// 		if(btn[8].pressed){
+		// 			gripper=0;
+		// 			socket.emit('serial:data',{
+		// 				value:'o'
+
+		// 			});
+		// 		}
+
+		// 		if(btn[9].pressed){
+		// 			gripper=1;
+		// 			socket.emit('serial:data',{
+		// 				value:'l'
+
+		// 			});
+		// 		}
+			
+
+		// }
+
+
+		//  setInterval("gamePad()",50);
+        function verificar(){
+			if (!navigator.mediaDevices || !navigator.mediaDevices.enumerateDevices) {
+				console.log("enumerateDevices() not supported.");
+				return;
+			}
+	
+			navigator.mediaDevices.enumerateDevices()
+			.then(function(devices) {
+			devices.forEach(function(device) {
+				console.log(device.kind + ": " + device.label +
+							" id = " + device.deviceId);
+			});
+			})
+			.catch(function(err) {
+			console.log(err.name + ": " + err.message);
+			});
+		}
+		verificar()
+	window.onload = function() {
+	
+	//var smoother = new Smoother([0.9995, 0.9995], [0, 0], 0);
+	// var	canvas = document.getElementById('canvas');
+	// var	context = canvas.getContext('2d');
+	// var	video = document.createElement('video');
+	// //var	detector;
+
+	// try {
+	// 	compatibility.getUserMedia({video: true}, function(stream) {
+	// 		try {
+	// 			// video.src = compatibility.URL.createObjectURL(stream);
+	// 			video.srcObject=stream;
+	// 			video.onloadedmetadata = function (e) {
+	// 			video.play ();
+	// 			};
+	// 		} catch (error) {
+	// 			video.src = stream;
+	// 		}
+	// 		compatibility.requestAnimationFrame(play2);
+	// 	}, function (error) {
+	// 		alert("WebRTC not available");
+	// 	});
+	// } catch (error) {
+	// 	alert(error);
+	// }
+	// function play2() {
+	// 	// compatibility.requestAnimationFrame(play2);
+	// 	// if (video.paused) video.play();
+	// 	// canvas.width = 400;
+	// 	// canvas.height = 400;
+	// 	// context.drawImage(video, 0, 0, canvas.clientWidth, canvas.clientHeight);
+	// }
+
+
+	// var fist_pos_old, angle = [0, 0];
+	
+	// function play() {
+	// 	compatibility.requestAnimationFrame(play);
+	// 	if (video.paused) video.play();
+		
+	// 	// Draw video overlay:
+	// 	// canvas.width = ~~(100 * video.videoWidth / video.videoHeight);
+	// 	// canvas.height = 100;
+	// 	canvas.width = 400;
+	// 	canvas.height = 400;
+	// 	context.drawImage(video, 0, 0, canvas.clientWidth, canvas.clientHeight);
+		
+	// 	if (video.readyState === video.HAVE_ENOUGH_DATA && video.videoWidth > 0) {
+		
+	// 		// Prepare the detector once the video dimensions are known:
+	// 		  if (!detector) {
+	// 			  var width = ~~(140 * video.videoWidth / video.videoHeight);
+	// 			var height = 140;
+	// 			  detector = new objectdetect.detector(width, height, 1.1, objectdetect.handfist);
+	// 		  }
+			  
+	// 		  //Smooth rotation of the 3D object:
+	// 		angle = smoother.smooth(angle);
+	// 		girY= -1*angle[0];
+
+	// 		// brazoX=60+10*Math.round(angle[1]);
+	// 		// girZ=(60+10*Math.round(angle[1]))*Math.PI/180;
+	// 		// if(brazoX<=0){
+	// 		// 	brazoX=1;
+	// 		// 	//brazoX=1;
+	// 		// 	girz=1*Math.PI/180;
+	// 		// 	gripper=0;
+	// 		// socket.emit('serial:data',{
+	// 		// 	value:brazoX.toString()
+
+	// 		// });
+	// 		// }else if(brazoX>60){
+	// 		// 	brazoX=60;
+	// 		// 	girZ=61*Math.PI/180;
+	// 		// 	gripper=1;
+	// 		// 	socket.emit('serial:data',{
+	// 		// 	value:brazoX.toString()
+
+	// 		// });
+	// 		// }else{
+	// 		// 	gripper=0;
+	// 		// 	socket.emit('serial:data',{
+	// 		// 	value:brazoX.toString()
+
+	// 		// 	});
+	// 		// }
+	// 		// // socket.emit('serial:data',{
+	// 		// // 	value:brazoX.toString()
+
+	// 		// // });
+		
+	// 		ava=1;
+	// 		// document.getElementById('transform_a').setAttribute('rotation', '0 1 0 ' + angle[0]); 
+	// 		// document.getElementById('transform_b').setAttribute('rotation', '1 0 0 ' + angle[1]); 
+			
+	// 		  // Perform the actual detection:
+	// 		var coords = detector.detect(video, 1);
+			
+	// 		if (coords[0]) {
+	// 			var coord = coords[0];
+				
+	// 			// Rescale coordinates from detector to video coordinate space:
+	// 			coord[0] *= video.videoWidth / detector.canvas.width;
+	// 			coord[1] *= video.videoHeight / detector.canvas.height;
+	// 			coord[2] *= video.videoWidth / detector.canvas.width;
+	// 			coord[3] *= video.videoHeight / detector.canvas.height;
+				
+	// 			var fist_pos = [coord[0] + coord[2] / 2, coord[1] + coord[3] / 2];
+				
+	// 			if (fist_pos_old) {
+	// 				var dx = (fist_pos[0] - fist_pos_old[0]) / video.videoWidth,
+	// 					dy = (fist_pos[1] - fist_pos_old[1]) / video.videoHeight;
+					
+	// 				if (dx*dx + dy*dy < 0.2) {
+	// 					angle[0] += 5.0 * dx;
+	// 					angle[1] += 5.0 * dy;
+	// 				}
+	// 				fist_pos_old = fist_pos;
+	// 			} else if (coord[4] > 2) {
+	// 				fist_pos_old = fist_pos;
+	// 			}
+			
+	// 			// Draw coordinates on video overlay:
+	// 			context.beginPath();
+	// 			context.lineWidth = '2';
+	// 			context.fillStyle = fist_pos_old ? 'rgba(0, 255, 255, 0.5)' : 'rgba(255, 0, 0, 0.5)';
+	// 			context.fillRect(
+	// 				coord[0] / video.videoWidth * canvas.clientWidth,
+	// 				coord[1] / video.videoHeight * canvas.clientHeight,
+	// 				coord[2] / video.videoWidth * canvas.clientWidth,
+	// 				coord[3] / video.videoHeight * canvas.clientHeight);
+	// 			context.stroke();
+	// 			} else fist_pos_old = null;
+	// 		}
+	// 	}
+	};
+		
+   </script>
+   <script src="graficas/graficaHumed.js"></script>
+   <script src="graficas/graficaHumedSuelo.js"></script>
+   <script src="graficas/graficaTemp.js"></script>
+   <script src="graficas/graficaCE.js"></script>
+
+
+</html>

@@ -1,0 +1,177 @@
+body {
+background-color:#2A2928;
+}
+
+.styleMarco{
+    position:absolute;
+    left:100%;
+    margin-left: -195px;
+    display:block;
+    z-index:97;
+    top:100%;
+    font-size: 9pt;
+    margin-top: -170px;
+    height: 170px;
+    width:195px;
+    color:white;
+    border: solid 0px transparent;
+    background-color:#0A1515;	
+    /* background-image: url('imgs/joystick_icon.png');
+    background-repeat: no-repeat;			 */
+}
+
+.styleJoystickMarco{
+    position:absolute;
+    left:85%;
+    /* margin-left: -170px; */
+    display:block;
+    z-index:97;
+    top:100%;
+    margin-top: -170px;
+    height: 30px;
+    width:30px;
+    border: solid 0px transparent;
+    background-color:#312F2E;	
+    /* background-image: url('imgs/joystick_icon.png');
+    background-repeat: no-repeat;			 */
+}
+
+.styleJoystickBack{
+    position:absolute;
+    left:100%;
+    margin-left: -150px;
+    display:block;
+    z-index:98;
+    top:100%;
+    margin-top: -150px;
+    height: 150px;
+    width:150px;
+    border: solid 0px transparent;
+    background: none;						
+}
+
+
+.styleJoystickFront{
+    position:absolute;
+    left:100%;
+    margin-left: -100px;
+    display:block;
+    z-index:99;
+    top:100%;
+    margin-top: -102px;
+    height: 50px;
+    width:50px;
+    border: solid 0px transparent;
+    background: none;			
+}
+
+.styleMap{
+    position: absolute;
+    top:100%;
+    margin-top:-150px;
+    width:35%;
+    height:150px;
+    display:block;
+    z-index:96;
+    border: double 6px #CED5D7;
+}
+
+.styleLongLati{
+position:absolute;
+    /* left:100%;
+    margin-left: -150px; */
+    display:block;
+    z-index:95;
+    top:100%;
+    font-size: 8pt;
+    margin-top: -170px;
+    height: 170px;
+    width:35%;
+    color:white;
+    border: solid 0px transparent;
+    background-color:#0A1515;	
+}
+
+.stylePresion{
+    position:absolute;
+    left:5px;
+    display:block;
+    z-index:93;
+    top:5px;
+    height: 100px;
+    width:100px;
+    border: solid 0px transparent;
+    background: none;						
+}
+
+.stylePresionDatos{
+    position:absolute;
+    left:35px;
+    display:block;
+    z-index:94;
+    top:50px;
+    font-size: 7pt;
+    height: 20px;
+    width:35px;
+    color:white;
+    border: solid 0px transparent;
+    background-color:#0F0F0F;	
+}
+
+.styleTemp{
+    position:absolute;
+    left:35%;
+    display:block;
+    z-index:93;
+    top:100%;
+    margin-top: -170px;
+    height: 170px;
+    width:25%;
+    border: solid 0px transparent;
+    background: #0A1515;
+    border: solid 6px #0A1515;
+                            
+}
+
+.styleCE{
+    position:absolute;
+    left:60%;
+    display:block;
+    z-index:94;
+    top:100%;
+    margin-top: -170px;
+    height: 170px;
+    width:25%;
+    border: solid 0px transparent;
+    background: #0A1515;
+    border: solid 6px #0A1515;						
+}
+
+.styleHumed{
+    position:absolute;
+    left:100%;
+    margin-left: -210px;
+    display:block;
+    z-index:91;
+    top:150px;
+    margin-top: 0px;
+    height: 200px;
+    width:210px; 
+    border: solid 0px transparent;
+    background: #0A1515;
+    border: solid 6px #0A1515;						
+}
+.styleHumedSuelo{
+    position:absolute;
+    left:100%;
+    margin-left: -210px;
+    display:block;
+    z-index:91;
+    top:280px;
+    margin-top: 0px;
+    height: 200px;
+    width:210px; 
+    border: solid 0px transparent;
+    background: #0A1515;
+    border: solid 6px #0A1515;      
+}
