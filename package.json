@@ -14,7 +14,9 @@
     "http-server": "^14.1.0",
     "mqtt": "^4.2.6",
     "serialport": "^9.2.8",
-    "socket.io": "^2.3.0"
+    "socket.io": "^2.3.0",
+    "update": "^0.7.4",
+    "upgrade": "^1.1.0"
   },
   "devDependencies": {
     "nodemon": "^2.0.4"
